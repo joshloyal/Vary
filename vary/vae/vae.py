@@ -9,7 +9,7 @@ import tensorflow.contrib.layers as layers
 import tensorflow.contrib.distributions as distributions
 from tensorflow.contrib.bayesflow import stochastic_tensor as st
 
-from tmnvi.base import BaseTopicModel
+from vary.base import BaseNVIModel
 
 
 def inference_network(x, n_latent_dim, hidden_units):
@@ -91,7 +91,7 @@ def topic_vae(n_latent_dim=2, hidden_units=[500, 500]):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class GaussianVAE(BaseTopicModel):
+class GaussianVAE(BaseNVIModel):
     def __init__(self, n_latent_dim=2, hidden_units=[500, 500], n_iter=10,
                  batch_size=32, n_jobs=1, random_state=123):
         self.n_latent_dim = n_latent_dim

@@ -4,8 +4,7 @@ import tensorflow as tf
 import tensorflow.contrib.learn as learn
 from keras.datasets import mnist
 
-#from tmnvi import vae
-from tmnvi import GaussianVAE
+from vary import GaussianVAE
 
 tf.logging.set_verbosity(tf.logging.INFO)
 

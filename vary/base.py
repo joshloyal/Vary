@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from tensorflow.contrib import learn
 
-from tmnvi.parallel import get_n_jobs
+from vary.parallel import get_n_jobs
 
 
 def _steps_per_iter(X, batch_size):
@@ -14,7 +14,7 @@ def _steps_per_iter(X, batch_size):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseTopicModel(BaseEstimator, TransformerMixin):
+class BaseNVIModel(BaseEstimator, TransformerMixin):
     def __init__(self, n_iter=10, batch_size=32, n_jobs=1, random_state=123):
         self.n_iter = n_iter
         self.batch_size = batch_size

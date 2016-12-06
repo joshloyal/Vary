@@ -2,18 +2,17 @@ from setuptools import setup
 
 
 PACKAGES = [
-        'tmnvi',
-        'tmnvi.vae',
-        'tmnvi.lda',
+        'vary',
+        'vary.vae',
 ]
 
 def setup_package():
     setup(
-        name="TopicModelsNVI",
+        name="Vary",
         version='0.1.0',
-        description='Topic Models built with Neural Variational Inference',
+        description='Neural Variational Inference Algorithms',
         author='Joshua D. Loyal',
-        url='https://github.com/joshloyal/TopicModelsNVI',
+        url='https://github.com/joshloyal/Vary',
         license='MIT',
         install_requires=['numpy', 'scipy', 'tensorflow'],
         packages=PACKAGES,
