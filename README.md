@@ -1,2 +1,2 @@
-# TopicModelsNVI
-Neural Variational Inference for Topic Models
+# Vary
+A repo to host models utilizing Neural Variational Inference
