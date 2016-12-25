@@ -1,0 +1,2 @@
+from vary.variational_autoencoder.vae import GaussianVAE
+from vary.variational_autoencoder.bottlekneck import InformationBottlekneck

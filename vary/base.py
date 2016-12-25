@@ -37,7 +37,7 @@ class BaseNVIModel(BaseEstimator, TransformerMixin):
         steps_per_iter = _steps_per_iter(X, self.batch_size)
         n_steps = int(steps_per_iter * self.n_iter)
 
-        self.model.fit(X, steps=n_steps, batch_size=self.batch_size)
+        self.model.fit(X, y=y, steps=n_steps, batch_size=self.batch_size)
 
     def transform(self, X):
         return self.model.predict(X)
