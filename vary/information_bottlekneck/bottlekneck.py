@@ -6,9 +6,9 @@ import tensorflow.contrib.distributions as distributions
 from tensorflow.contrib.bayesflow import stochastic_tensor as st
 from tensorflow.contrib.bayesflow import variational_inference as vi
 
-from vary.base import BaseNVIModel
+from vary.base import BaseTensorFlowModel
 from vary import tensor_utils as tensor_utils
-from vary.variational_autoencoder.ops import mvn_inference_network, logistic_regression
+from vary.ops import mvn_inference_network, logistic_regression
 
 
 def variational_information_bottlekneck(features,
@@ -69,7 +69,7 @@ def vib_model(n_latent_dim=2, hidden_units=[500, 500]):
     return model_spec
 
 
-class InformationBottlekneck(BaseNVIModel):
+class InformationBottlekneck(BaseTensorFlowModel):
     def __init__(self, n_latent_dim=2, hidden_units=[500, 500], kl_weight=1.0,
                  n_iter=10, batch_size=32, n_jobs=1, random_state=123):
         self.n_latent_dim = n_latent_dim

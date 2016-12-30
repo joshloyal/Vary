@@ -3,6 +3,7 @@ import six
 
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
+import tensorflow as tf
 from tensorflow.contrib import learn
 
 from vary.parallel import get_n_jobs
@@ -14,9 +15,17 @@ def _steps_per_iter(X, batch_size):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseNVIModel(BaseEstimator, TransformerMixin):
-    def __init__(self, n_iter=10, batch_size=32, n_jobs=1, random_state=123):
+class BaseTensorFlowModel(BaseEstimator, TransformerMixin):
+    def __init__(self,
+                 n_iter=10,
+                 learning_rate=1e-3,
+                 optimizer='Adam',
+                 batch_size=32,
+                 n_jobs=1,
+                 random_state=123):
         self.n_iter = n_iter
+        self.learning_rate = learning_rate
+        self.optimizer = optimizer
         self.batch_size = batch_size
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -24,6 +33,15 @@ class BaseNVIModel(BaseEstimator, TransformerMixin):
     @abc.abstractmethod
     def _model_spec(self):
         pass
+
+    def _train_op(self, objective):
+        train_op = tf.contrib.layers.optimize_loss(
+            objective,
+            tf.contrib.framework.get_global_step(),
+            optimizer='Adam',
+            learning_rate=1e-3)
+
+        return train_op
 
     def fit(self, X, y=None):
         config = learn.RunConfig(

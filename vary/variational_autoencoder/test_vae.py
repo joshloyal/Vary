@@ -24,10 +24,14 @@ class TestGaussianVAE(tf.test.TestCase):
         vae = GaussianVAE(n_latent_dim=3, n_iter=1, n_jobs=-1)
         vae.fit(X)
         print(vae.transform(X))
-        #estimator = learn.Estimator(model_fn=model_op, config=config)
 
-        #estimator.fit(X, steps=1000)
-        #print(estimator.predict(X))
+    def test_householder_flow(self):
+        n_topics, X, _ = build_simple_topics()
+        vae = GaussianVAE(n_latent_dim=3, n_iter=1,
+                          normalizing_flow='householder',
+                          n_jobs=-1)
+        vae.fit(X)
+        print(vae.transform(X))
 
     #def test_mnist(self):
     #    (X_train, y_train), (X_test, y_test) = mnist.load_data()
@@ -46,8 +50,8 @@ class TestGaussianVAE(tf.test.TestCase):
     #    print(estimator.predict(X_train))
 
 
-class TestBottleKneck(tf.test.TestCase):
-    def test_bottlekneck(self):
-        n_topics, X, labels = build_simple_topics()
-        vae = InformationBottlekneck()
-        vae.fit(X, labels)
+#class TestBottleKneck(tf.test.TestCase):
+#    def test_bottlekneck(self):
+#        n_topics, X, labels = build_simple_topics()
+#        vae = InformationBottlekneck()
+#        vae.fit(X, labels)

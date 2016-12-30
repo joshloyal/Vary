@@ -3,7 +3,8 @@ from setuptools import setup
 
 PACKAGES = [
         'vary',
-        'vary.vae',
+        'vary.variational_autoencoder',
+        'vary.information_bottlekneck'
 ]
 
 def setup_package():
