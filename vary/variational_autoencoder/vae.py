@@ -14,7 +14,7 @@ from vary import ops
 def variational_autoencoder(features,
                             n_latent_dim=2,
                             hidden_units=[500, 500],
-                            normalizing_flow=None,
+                            normalizing_flow='identity',
                             flow_n_iter=2,
                             kl_weight=1.0,
                             random_state=123):
@@ -40,6 +40,13 @@ def variational_autoencoder(features,
             #        mu=q_mu, chol=q_chol),
             #        name='q_z')
 
+        z_input = layers.utils.convert_collection_to_dict(
+            ops.VariationalParams.COLLECTION)[ops.VariationalParams.INPUT]
+
+        norm_flow = flows.get_flow(normalizing_flow,
+                                   n_iter=flow_n_iter,
+                                   random_state=random_state)
+
     # set up the priors
     with tf.variable_scope('prior'):
         prior = distributions.Normal(
@@ -47,35 +54,24 @@ def variational_autoencoder(features,
             sigma=np.ones(n_latent_dim, dtype=np.float32))
 
     with tf.variable_scope('generative_network'):
-        if normalizing_flow == 'householder':
-            z_input = layers.utils.convert_collection_to_dict(
-                ops.VariationalParams.COLLECTION)[ops.VariationalParams.INPUT]
-
-            # this should also return log(det(flow)) for use in objective
-            # (only flow non-volume preserving flows)
-            q_z_k = flows.householder_flow(q_z,
-                                           z_input,
-                                           n_iter=flow_n_iter,
-                                           random_state=random_state)
-        else:
-            q_z_k = q_z
-
-        p_x_given_z = ops.bernoulli_generative_network(z=q_z_k,
-                                                       hidden_units=hidden_units,
-                                                       n_features=n_features)
+        p_x_given_z = ops.bernoulli_generative_network(
+            z=norm_flow.transform(q_z, z_input),
+            hidden_units=hidden_units,
+            n_features=n_features)
 
     # set up elbo
-    kl = tf.reduce_sum(distributions.kl(q_z.distribution, prior), 1)
     log_likelihood = tf.reduce_sum(p_x_given_z.log_pmf(features), 1)
-    neg_elbo = -tf.reduce_sum(log_likelihood - kl_weight * kl, 0)
+    log_det_jac = norm_flow.log_det_jacobian(q_z)
+    kl = tf.reduce_sum(distributions.kl(q_z.distribution, prior), 1)
+    neg_elbo = -tf.reduce_sum(log_likelihood + log_det_jac - kl_weight * kl, 0)
 
-    return q_z_k, tf.identity(neg_elbo, name='neg_elbo')
+    return q_mu, tf.identity(neg_elbo, name='neg_elbo')
 
 
 def vae_model(train_fn,
               n_latent_dim=2,
               hidden_units=[500, 500],
-              normalizing_flow=None,
+              normalizing_flow='identity',
               flow_n_iter=2):
     def model_spec(features, labels=None):
         q_mu, neg_elbo = variational_autoencoder(
@@ -90,7 +86,7 @@ class GaussianVAE(BaseTensorFlowModel):
     def __init__(self,
                  n_latent_dim=2,
                  hidden_units=[500, 500],
-                 normalizing_flow=None,
+                 normalizing_flow='identity',
                  flow_n_iter=2,
                  kl_weight=1.0,
                  n_iter=10,
