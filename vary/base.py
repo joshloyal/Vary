@@ -38,8 +38,8 @@ class BaseTensorFlowModel(BaseEstimator, TransformerMixin):
         train_op = tf.contrib.layers.optimize_loss(
             objective,
             tf.contrib.framework.get_global_step(),
-            optimizer='Adam',
-            learning_rate=1e-3)
+            optimizer=self.optimizer,
+            learning_rate=self.learning_rate)
 
         return train_op
 

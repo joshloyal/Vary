@@ -4,7 +4,9 @@ import six
 
 import tensorflow as tf
 from tensorflow.contrib import slim
+import tensorflow.contrib.layers as layers
 
+from vary import ops
 from vary import tensor_utils as tensor_utils
 
 
@@ -16,18 +18,18 @@ class NormalizingFlow(object):
         self.random_state = random_state
 
     @abc.abstractmethod
-    def _transform(self, z_sample, z_input=None):
+    def _transform(self, z_sample):
         pass
 
-    def transform(self, z_sample, z_input=None):
-        with tf.variable_scope('normalizing_flow', self.name,
-                               [z_sample, z_input]):
+    def transform(self, z_sample):
+        with tf.variable_scope('normalizing_flow', self.name, [z_sample]):
             for k in range(self.n_iter):
-                z_sample = self._transform(z_sample,
-                                           z_input)
+                z_sample = self._transform(z_sample)
+            return z_sample
 
-                return z_sample
 
+class VolumePreservingFlowMixin(object):
+    """Volume preserving flow."""
     def log_det_jacobian(self, z_sample):
         batch_size = tf.shape(z_sample)[0]
         return tf.zeros([batch_size])
@@ -86,7 +88,7 @@ def get_flow(name, n_iter=2, random_state=123):
 
 
 @RegisterFlow('identity')
-class IdentityFlow(NormalizingFlow):
+class IdentityFlow(NormalizingFlow, VolumePreservingFlowMixin):
     """No-op for consistency."""
     def __init__(self, n_iter=2, random_state=123):
         super(IdentityFlow, self).__init__(
@@ -94,12 +96,11 @@ class IdentityFlow(NormalizingFlow):
             n_iter=n_iter,
             random_state=random_state)
 
-    def _transform(self, z_sample, z_input=None):
+    def _transform(self, z_sample):
         return z_sample
 
 
 def householder_flow_single(z_sample,
-                            z_input,
                             random_state=123,
                             name=None):
     """Implements a single iteration of the Householder transformation.
@@ -108,10 +109,6 @@ def householder_flow_single(z_sample,
     ----------
     z_sample : tensor of shape [batch_size, n_latent_dim]
         The sample generated from the previous iteration of the transformation.
-
-    z_input : tensor of shape [batch_size, n_variational_params]
-        The output of the fully-connected network used as input
-        to construct the parameter's of the initial variational distribution.
 
     random_state : int
         Seed to the random number generator
@@ -124,11 +121,16 @@ def householder_flow_single(z_sample,
     z_new : tensor of shape [batch_size, n_latent_dim]
         Result of the transformation
     """
-    with tf.variable_scope('householder_flow_single', name,
-                           [z_sample, z_input]):
+    with tf.variable_scope('householder_flow_single', name, [z_sample]):
         z_sample = tensor_utils.to_tensor(z_sample, dtype=tf.float32)
-        z_input = tensor_utils.to_tensor(z_input, dtype=tf.float32)
         n_latent_dim = tensor_utils.get_shape(z_sample)[1]
+
+        # z_input : tensor of shape [batch_size, n_variational_params]
+        #    The output of the fully-connected network used as input
+        #    to construct the parameter's of the initial variational
+        #    distribution.
+        z_input = layers.utils.convert_collection_to_dict(
+            ops.VariationalParams.COLLECTION)[ops.VariationalParams.INPUT]
 
         v = slim.fully_connected(z_input,
                                  num_outputs=n_latent_dim,
@@ -146,7 +148,7 @@ def householder_flow_single(z_sample,
 
 
 @RegisterFlow('householder')
-class HouseholderFlow(NormalizingFlow):
+class HouseholderFlow(NormalizingFlow, VolumePreservingFlowMixin):
     """Implements the Householder Transformation, which is a
     valume-preserving normalizing flow. The purpose of narmalizing flows
     is to improve a VAE's evidence lower bound by performing a series
@@ -168,12 +170,8 @@ class HouseholderFlow(NormalizingFlow):
 
     Parameters
     ----------
-    z_sample : tensor of shape [batch_size, n_latent_dim]
-        A sample from the initial latent distribution
-
-    z_input : tensor of shape [batch_size, n_variational_params]
-        The output of the fully-connected network used as input
-        to construct the parameter's of the initial variational distribution.
+    n_iter : int
+        Number of iterations to perform the normalizing flow.
 
     random_state : int
         Seed to the random number generator
@@ -198,71 +196,9 @@ class HouseholderFlow(NormalizingFlow):
             n_iter=n_iter,
             random_state=random_state)
 
-    def _transform(self, z_sample, z_input=None):
+    def _transform(self, z_sample):
         return householder_flow_single(z_sample,
-                                       z_input,
                                        random_state=self.random_state)
-
-
-#def householder_flow(z_sample,
-#                     z_input,
-#                     n_iter=2,
-#                     random_state=123,
-#                     name=None):
-#    """Implements the Householder Transformation, which is a
-#    valume-preserving normalizing flow. The purpose of narmalizing flows
-#    is to improve a VAE's evidence lower bound by performing a series
-#    of invertible transformations of latent variables with simple posteriors
-#    to generate a final random variable with a more flexible posterior.
-#
-#    The evidence lower bound is given by
-#
-#        E_q[ ln(p(x|z_T) + sum(ln(det(Jac(F)))) ] - KL(q(z_0|x)||p(z_T))
-#
-#    where the sum is taken from t = 1 ... T and Jac(F) is the Jacobian
-#    matrix of the normalizing flow transformation wrt the latent variable.
-#
-#    The householder transformation is a special normalizing flow that is also
-#    volume preserving, i.e. has zero Jacobian determinant. This means that
-#    performing this transformation results in a posterior with an
-#    (approximately) full-covariance matrix, while leaving the objective
-#    unmodified.
-#
-#    Parameters
-#    ----------
-#    z_sample : tensor of shape [batch_size, n_latent_dim]
-#        A sample from the initial latent distribution
-#
-#    z_input : tensor of shape [batch_size, n_variational_params]
-#        The output of the fully-connected network used as input
-#        to construct the parameter's of the initial variational distribution.
-#
-#    random_state : int
-#        Seed to the random number generator
-#
-#    name : str
-#        Name of the operation
-#
-#    Returns
-#    -------
-#    q_z_k : tensor of shape [batch_size, n_latent_dim]
-#        A sample from the posterior of the distribution obtained
-#        by applying the householder transformation.
-#
-#    Reference
-#    ---------
-#    - Jakub M. Tomczak and Max Welling,
-#      "Improving Variational Auto-Encoders using Householder Flow".
-#    """
-#    with tf.variable_scope('householder_flow', name, [z_sample, z_input]):
-#        for k in range(n_iter):
-#            z_sample = householder_flow_single(
-#                z_sample,
-#                z_input,
-#                random_state=random_state,
-#                name='householder_flow_iteration_{}'.format(k))
-#
-#            return z_sample, None
 
 
 def planar_flow_variables(n_latent_dim):
@@ -300,3 +236,13 @@ def planar_flow(z_sample,
         n_latent_dim = tensor_utils.get_shape(z_sample)[1]
         U, W, bias = planar_flow_variables(n_latent_dim)
         z_hat = tf.xw_plus_b(z_sample, W, bias)
+
+
+#@RegisterFlow('planar')
+#class PlanarFlow(NormalizingFlow):
+#    pass
+#
+#
+#@RegisterFlow('inverse_autoregressive')
+#class InverseAutoRegressiveFlow(NormalizingFlow):
+#    pass

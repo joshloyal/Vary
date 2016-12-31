@@ -29,6 +29,7 @@ def variational_autoencoder(features,
         #q_mu, q_chol = ops.mvn_inference_network(x=features,
         #                                         n_latent_dim=n_latent_dim,
         #                                         hidden_units=hidden_units)
+
     # set up the latent variables
     with tf.variable_scope('latent_samples'):
         with st.value_type(st.SampleValue()):
@@ -40,12 +41,12 @@ def variational_autoencoder(features,
             #        mu=q_mu, chol=q_chol),
             #        name='q_z')
 
-        z_input = layers.utils.convert_collection_to_dict(
-            ops.VariationalParams.COLLECTION)[ops.VariationalParams.INPUT]
-
+        # transform the sample to a more complex density by performing
+        # a normalizing flow transformation
         norm_flow = flows.get_flow(normalizing_flow,
                                    n_iter=flow_n_iter,
                                    random_state=random_state)
+        q_z_trans = norm_flow.transform(q_z)
 
     # set up the priors
     with tf.variable_scope('prior'):
@@ -55,7 +56,7 @@ def variational_autoencoder(features,
 
     with tf.variable_scope('generative_network'):
         p_x_given_z = ops.bernoulli_generative_network(
-            z=norm_flow.transform(q_z, z_input),
+            z=q_z_trans,
             hidden_units=hidden_units,
             n_features=n_features)
 
@@ -63,7 +64,7 @@ def variational_autoencoder(features,
     log_likelihood = tf.reduce_sum(p_x_given_z.log_pmf(features), 1)
     log_det_jac = norm_flow.log_det_jacobian(q_z)
     kl = tf.reduce_sum(distributions.kl(q_z.distribution, prior), 1)
-    neg_elbo = -tf.reduce_sum(log_likelihood + log_det_jac - kl_weight * kl, 0)
+    neg_elbo = -tf.reduce_mean(log_likelihood + log_det_jac - kl_weight * kl, 0)
 
     return q_mu, tf.identity(neg_elbo, name='neg_elbo')
 
