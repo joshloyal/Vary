@@ -27,8 +27,12 @@ class NormalizingFlow(object):
                 z_sample = self._transform(z_sample)
             return z_sample
 
+    @abc.abstractmethod
+    def log_det_jacobian(self, z_sample):
+        pass
 
-class VolumePreservingFlowMixin(object):
+
+class VolumePreservingFlow(NormalizingFlow):
     """Volume preserving flow."""
     def log_det_jacobian(self, z_sample):
         batch_size = tf.shape(z_sample)[0]
@@ -88,7 +92,7 @@ def get_flow(name, n_iter=2, random_state=123):
 
 
 @RegisterFlow('identity')
-class IdentityFlow(NormalizingFlow, VolumePreservingFlowMixin):
+class IdentityFlow(VolumePreservingFlow):
     """No-op for consistency."""
     def __init__(self, n_iter=2, random_state=123):
         super(IdentityFlow, self).__init__(
@@ -148,7 +152,7 @@ def householder_flow_single(z_sample,
 
 
 @RegisterFlow('householder')
-class HouseholderFlow(NormalizingFlow, VolumePreservingFlowMixin):
+class HouseholderFlow(VolumePreservingFlow):
     """Implements the Householder Transformation, which is a
     valume-preserving normalizing flow. The purpose of narmalizing flows
     is to improve a VAE's evidence lower bound by performing a series

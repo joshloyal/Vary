@@ -6,7 +6,7 @@ import tensorflow.contrib.distributions as distributions
 from tensorflow.contrib.bayesflow import stochastic_tensor as st
 
 from vary.base import BaseTensorFlowModel
-from vary.variational_autoencoder import flows
+from vary.variational_autoencoder import flows as flow_lib
 from vary import tensor_utils as tensor_utils
 from vary import ops
 
@@ -43,9 +43,9 @@ def variational_autoencoder(features,
 
         # transform the sample to a more complex density by performing
         # a normalizing flow transformation
-        norm_flow = flows.get_flow(normalizing_flow,
-                                   n_iter=flow_n_iter,
-                                   random_state=random_state)
+        norm_flow = flow_lib.get_flow(normalizing_flow,
+                                      n_iter=flow_n_iter,
+                                      random_state=random_state)
         q_z_trans = norm_flow.transform(q_z)
 
     # set up the priors
