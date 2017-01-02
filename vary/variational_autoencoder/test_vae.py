@@ -5,7 +5,7 @@ import tensorflow.contrib.learn as learn
 from keras.datasets import mnist
 from keras.utils import np_utils
 
-from vary import GaussianVAE, InformationBottlekneck
+from vary import GaussianVAE
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -48,10 +48,3 @@ class TestGaussianVAE(tf.test.TestCase):
 
     #    estimator.fit(X_train, steps=1000, batch_size=32)
     #    print(estimator.predict(X_train))
-
-
-#class TestBottleKneck(tf.test.TestCase):
-#    def test_bottlekneck(self):
-#        n_topics, X, labels = build_simple_topics()
-#        vae = InformationBottlekneck()
-#        vae.fit(X, labels)

@@ -1,2 +1,3 @@
 from vary.flows.registry import RegisterFlow, get_flow
-from vary.flows.flows import IdentityFlow, HouseHolderFlow
+from vary.flows.identity import IdentityFlow
+from vary.flows.householder import HouseHolderFlow

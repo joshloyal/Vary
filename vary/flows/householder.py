@@ -1,4 +1,4 @@
-"""Normalizing Flows"""
+"""Householder Normalizing Flow"""
 import abc
 import six
 
@@ -8,25 +8,11 @@ import tensorflow.contrib.layers as layers
 
 from vary.flows.registry import RegisterFlow
 from vary.flows.base import NormalizingFlow
-from vary.flows.base import _IdentityFlow, _VolumePreservingFlow
+from vary.flows.base import _VolumePreservingFlow
 
 from vary import ops
 from vary.exceptions import GraphLookupError
 from vary import tensor_utils as tensor_utils
-
-
-@RegisterFlow('identity')
-class IdentityFlow(NormalizingFlow):
-    """No-op for consistency."""
-    def __init__(self, n_iter=2, random_state=123):
-        super(IdentityFlow, self).__init__(
-            name='identity_flow',
-            n_iter=n_iter,
-            random_state=random_state)
-
-    @property
-    def flow_class(self):
-        return _IdentityFlow
 
 
 class _HouseHolderFlow(_VolumePreservingFlow):

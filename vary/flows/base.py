@@ -35,11 +35,6 @@ class _VolumePreservingFlow(_Flow):
         return tf.zeros([batch_size])
 
 
-class _IdentityFlow(_VolumePreservingFlow):
-    def transform(self, z_sample, features=None):
-        return z_sample, self.log_det_jacobian(z_sample)
-
-
 @six.add_metaclass(abc.ABCMeta)
 class NormalizingFlow(object):
     def __init__(self, name, n_iter=2, random_state=123):
