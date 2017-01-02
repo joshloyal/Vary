@@ -46,7 +46,7 @@ def variational_autoencoder(features,
         norm_flow = flow_lib.get_flow(normalizing_flow,
                                       n_iter=flow_n_iter,
                                       random_state=random_state)
-        q_z_trans = norm_flow.transform(q_z, features=features)
+        q_z_trans, log_det_jac = norm_flow.transform(q_z, features=features)
 
     # set up the priors
     with tf.variable_scope('prior'):
@@ -62,7 +62,6 @@ def variational_autoencoder(features,
 
     # set up elbo
     log_likelihood = tf.reduce_sum(p_x_given_z.log_pmf(features), 1)
-    log_det_jac = norm_flow.log_det_jacobian(q_z, features=features)
     kl = tf.reduce_sum(distributions.kl(q_z.distribution, prior), 1)
     neg_elbo = -tf.reduce_mean(log_likelihood + log_det_jac - kl_weight * kl, 0)
 

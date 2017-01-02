@@ -24,10 +24,6 @@ class RegisterFlow(object):
             raise TypeError("flow_cls must implement a `transform` method, "
                             "recieved %s" % flow_cls)
 
-        if not hasattr(flow_cls, 'log_det_jacobian'):
-            raise TypeError("flow_cls must implement a `log_det_jacobian` "
-                            "method, recieved %s" % flow_cls)
-
         if self._key in _NORMALIZING_FLOWS:
             raise ValueError("%s has already been registered to : %s"
                              % (self._key, _NORMALIZING_FLOWS[self._key]))

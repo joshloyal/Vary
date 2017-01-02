@@ -46,7 +46,10 @@ class _HouseHolderFlow(_VolumePreservingFlow):
         z_new : tensor of shape [batch_size, n_latent_dim]
             Result of the transformation
 
-        Note: The HouseHolder flow takes input from the generative network
+        log_det_jacobian : tensor of shape [batch_size, 1]
+            The logarithm of the deterimant of the jacobian of the
+            transformation. The Householder flow is a volume preserving flow,
+            so this is simply a vector of zeros.
         """
         with tf.variable_scope('householder_flow_single', [z_sample]):
             if features is None:
@@ -68,7 +71,7 @@ class _HouseHolderFlow(_VolumePreservingFlow):
                      tf.reduce_sum(
                         2 * (v_1 * v_2) * tf.expand_dims(z_sample, -1), 2))
 
-            return z_new
+            return z_new, self.log_det_jacobian(z_sample)
 
 
 @RegisterFlow('householder')

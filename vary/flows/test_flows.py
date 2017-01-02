@@ -18,10 +18,8 @@ class TestFlows(tf.test.TestCase):
 
         z_sample = module_rng.randn(10, 5)
         with self.test_session() as sess:
-            trans = flow.transform(z_sample)
+            trans, jacobian = flow.transform(z_sample)
             self.assertAllClose(z_sample, trans.eval())
-
-            jacobian = flow.log_det_jacobian(z_sample)
             self.assertAllClose(np.zeros(10), jacobian.eval())
 
     def test_householder_no_input(self):
@@ -29,7 +27,7 @@ class TestFlows(tf.test.TestCase):
 
         z_sample = module_rng.randn(10, 5)
         with pytest.raises(Exception):
-            trans = flow.transform(z_sample)
+            trans, jacobian = flow.transform(z_sample)
 
     def test_householder_flow(self):
         flow = HouseHolderFlow(n_iter=2)
@@ -37,10 +35,9 @@ class TestFlows(tf.test.TestCase):
         features = module_rng.randn(10, 30)
         z_sample = module_rng.randn(10, 5)
         with self.test_session() as sess:
-            trans_1 = flow.transform(z_sample, features)
-            trans_2 = flow.transform(z_sample, features)
+            trans_1, jac_1 = flow.transform(z_sample, features)
+            trans_2, jac_2 = flow.transform(z_sample, features)
             sess.run(tf.global_variables_initializer())
             self.assertAllClose(trans_1.eval(), trans_2.eval())
-
-            jacobian = flow.log_det_jacobian(z_sample, features=features)
-            self.assertAllClose(np.zeros(10), jacobian.eval())
+            self.assertAllClose(np.zeros(10), jac_1.eval())
+            self.assertAllClose(jac_1.eval(), jac_2.eval())
