@@ -4,15 +4,9 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import tensorflow.contrib.layers as layers
 import tensorflow.contrib.distributions as distributions
-
 from tensorflow.contrib.distributions import distribution_util
 
-
-class VariationalParams(object):
-    COLLECTION = 'variational_params'
-    INPUT = 'input'
-    LOCATION = 'location'
-    SCALE = 'scale'
+from vary import enums
 
 
 def gaussian_inference_network(x, n_latent_dim, hidden_units):
@@ -23,8 +17,8 @@ def gaussian_inference_network(x, n_latent_dim, hidden_units):
 
         # input layer to the gaussian latent variable
         layers.utils.collect_named_outputs(
-            VariationalParams.COLLECTION,
-            VariationalParams.INPUT,
+            enums.VariationalParams.COLLECTION,
+            enums.VariationalParams.INPUT,
             net)
 
         gaussian_params = slim.fully_connected(
@@ -35,15 +29,15 @@ def gaussian_inference_network(x, n_latent_dim, hidden_units):
 
     # The mean parameter is unconstrained
     mu = layers.utils.collect_named_outputs(
-        VariationalParams.COLLECTION,
-        VariationalParams.LOCATION,
+        enums.VariationalParams.COLLECTION,
+        enums.VariationalParams.LOCATION,
         gaussian_params[:, :n_latent_dim])
 
     # The standard deviation must be positive. Parametrize with a softplus and
     # add a small epsilon for numerical stability
     sigma = layers.utils.collect_named_outputs(
-        VariationalParams.COLLECTION,
-        VariationalParams.SCALE,
+        enums.VariationalParams.COLLECTION,
+        enums.VariationalParams.SCALE,
         1e-6 + tf.nn.softplus(gaussian_params[:, n_latent_dim:]))
 
     return mu, sigma
@@ -60,8 +54,8 @@ def mvn_inference_network(x, n_latent_dim, hidden_units):
 
         # input layer to the gaussian latent variable
         layers.utils.collect_named_outputs(
-            VariationalParams.COLLECTION,
-            VariationalParams.INPUT,
+            enums.VariationalParams.COLLECTION,
+            enums.VariationalParams.INPUT,
             net)
 
         mvn_params = slim.fully_connected(

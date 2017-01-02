@@ -5,6 +5,7 @@ from tensorflow.contrib import layers
 
 from vary import tensor_utils
 from vary import ops
+from vary import enums
 from vary.flows import IdentityFlow, HouseHolderFlow
 
 
@@ -33,18 +34,13 @@ class TestFlows(tf.test.TestCase):
     def test_householder_flow(self):
         flow = HouseHolderFlow(n_iter=2)
 
+        features = module_rng.randn(10, 30)
         z_sample = module_rng.randn(10, 5)
-        z_input = layers.utils.collect_named_outputs(
-            ops.VariationalParams.COLLECTION,
-            ops.VariationalParams.INPUT,
-            tensor_utils.to_tensor(
-                module_rng.randn(10, 30), dtype=tf.float32)
-        )
         with self.test_session() as sess:
-            trans_1 = flow.transform(z_sample)
-            trans_2 = flow.transform(z_sample)
+            trans_1 = flow.transform(z_sample, features)
+            trans_2 = flow.transform(z_sample, features)
             sess.run(tf.global_variables_initializer())
             self.assertAllClose(trans_1.eval(), trans_2.eval())
 
-            jacobian = flow.log_det_jacobian(z_sample)
+            jacobian = flow.log_det_jacobian(z_sample, features=features)
             self.assertAllClose(np.zeros(10), jacobian.eval())

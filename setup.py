@@ -3,6 +3,7 @@ from setuptools import setup
 
 PACKAGES = [
         'vary',
+        'vary.exceptions',
         'vary.flows',
         'vary.variational_autoencoder',
         'vary.information_bottlekneck'

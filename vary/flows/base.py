@@ -18,7 +18,7 @@ class _Flow(object):
         self._built = True
 
     @abc.abstractmethod
-    def transform(self, z_sample):
+    def transform(self, z_sample, features=None):
         pass
 
     @abc.abstractmethod
@@ -34,7 +34,7 @@ class _VolumePreservingFlow(_Flow):
 
 
 class _IdentityFlow(_VolumePreservingFlow):
-    def transform(self, z_sample):
+    def transform(self, z_sample, features=None):
         return z_sample
 
 
@@ -56,18 +56,28 @@ class NormalizingFlow(object):
                            for _ in range(self.n_iter)]
         self._built = True
 
-    def transform(self, z_sample):
+    def transform(self, z_sample, features=None):
+        """
+        Returns
+        -------
+        q_z_k : tensor of shape [batch_size, n_latent_dim]
+            A sample from the posterior of the distribution obtained
+            by applying the householder transformation.
+        """
         with tf.variable_scope('normalizing_flow_transform',
                                self.name + '_transform',
                                [z_sample]):
+            if features is not None:
+                features = tensor_utils.to_tensor(features, dtype=tf.float32)
+
             z_sample = tensor_utils.to_tensor(z_sample, dtype=tf.float32)
             n_latent_dim = tensor_utils.get_shape(z_sample)[1]
             self.build(n_latent_dim)
             for flow in self._flows:
-                z_sample = flow.transform(z_sample)
+                z_sample = flow.transform(z_sample, features=features)
             return z_sample
 
-    def log_det_jacobian(self, z_sample):
+    def log_det_jacobian(self, z_sample, features=None):
         with tf.variable_scope('normalizing_flow_log_det_jacobian',
                                self.name + '_log_det_jacobian',
                                [z_sample]):
@@ -77,6 +87,6 @@ class NormalizingFlow(object):
             log_det_jacobians = []
             for flow in self._flows:
                 log_det_jacobians.append(flow.log_det_jacobian(z_sample))
-                z_sample = flow.transform(z_sample)
+                z_sample = flow.transform(z_sample, features=features)
 
             return tf.add_n(log_det_jacobians)
