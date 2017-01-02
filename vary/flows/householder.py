@@ -1,16 +1,11 @@
 """Householder Normalizing Flow"""
-import abc
-import six
-
 import tensorflow as tf
 from tensorflow.contrib import slim
-import tensorflow.contrib.layers as layers
 
 from vary.flows.registry import RegisterFlow
 from vary.flows.base import NormalizingFlow
 from vary.flows.base import _VolumePreservingFlow
 
-from vary import ops
 from vary.exceptions import GraphLookupError
 from vary import tensor_utils as tensor_utils
 
@@ -103,84 +98,3 @@ class HouseHolderFlow(NormalizingFlow):
     @property
     def flow_class(self):
         return _HouseHolderFlow
-
-
-#def planar_flow_variables(n_latent_dim):
-#    """Calculate a vector u_hat that ensure invertibility (appendix A.1)"""
-#    planar_u = tf.get_variable('planar_u',
-#                               shape=[n_latent_dim],
-#                               initializer=None,
-#                               dtype=tf.float32,
-#                               trainable=True)
-#
-#    planar_w = tf.get_variable('planar_w',
-#                               shape=[n_latent_dim],
-#                               initializer=None,
-#                               dtype=tf.float32,
-#                               trainable=True)
-#
-#    bias = tf.get_variable('planar_bias',
-#                           shape=[],
-#                           initializer=tf.zeros_initializer(),
-#                           dtype=tf.float32,
-#                           trainable=True)
-#
-#    uw = tf.matmul(planar_u, planar_w)
-#    muw = -1 + tf.nn.softplus(uw)  # -1 + log(1 + exp(uw))
-#    u_hat = (planar_u +
-#             (muw - uw) * tf.transpose(planar_w) /
-#                tf.reduce_sum(planar_w ** 2))
-#
-#    return u_hat, planar_w, bias
-#
-#
-#def planar_flow(z_sample,
-#                name=None):
-#    with tf.variable_scope('planar_flow', name, [z_sample]):
-#        n_latent_dim = tensor_utils.get_shape(z_sample)[1]
-#        U, W, bias = planar_flow_variables(n_latent_dim)
-#        z_hat = tf.xw_plus_b(z_sample, W, bias)
-#
-#
-#class _PlanarFlow(Flow):
-#    """Single iteration of a planar flow."""
-#    def build(self, n_latent_dims):
-#        """Calculate a vector u_hat that ensure invertibility (appendix A.1)"""
-#        self.planar_u = tf.get_variable('planar_u',
-#                                   shape=[n_latent_dim],
-#                                   initializer=None,
-#                                   dtype=tf.float32,
-#                                   trainable=True)
-#
-#        self.planar_w = tf.get_variable('planar_w',
-#                                   shape=[n_latent_dim],
-#                                   initializer=None,
-#                                   dtype=tf.float32,
-#                                   trainable=True)
-#
-#        self.bias = tf.get_variable('planar_bias',
-#                               shape=[],
-#                               initializer=tf.zeros_initializer(),
-#                               dtype=tf.float32,
-#                               trainable=True)
-#
-#        uw = tf.matmul(planar_u, planar_w)
-#        muw = -1 + tf.nn.softplus(uw)  # -1 + log(1 + exp(uw))
-#        self.u_hat = (planar_u +
-#                 (muw - uw) * tf.transpose(planar_w) /
-#                    tf.reduce_sum(planar_w ** 2))
-#
-#        super(_PlanarFlow, self).build()
-#
-#    def __call__(self, z_sample):
-#        z_hat = tf.xw_plus_b
-#
-#
-##@RegisterFlow('planar')
-##class PlanarFlow(NormalizingFlow):
-##    pass
-##
-##
-##@RegisterFlow('inverse_autoregressive')
-##class InverseAutoRegressiveFlow(NormalizingFlow):
-##    pass

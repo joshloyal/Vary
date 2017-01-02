@@ -9,6 +9,14 @@ from tensorflow.contrib.distributions import distribution_util
 from vary import enums
 
 
+def vector_dot(vec_1, vec_2, name=None):
+    """Vector dot product. The input vectors are assumed to be one dimensional."""
+    with tf.variable_scope('vector_dot', name, [vec_1, vec_2]):
+        #return tf.matmul(vec_1, tf.reshape(vec_2, [-1, 1]))
+        #return tf.squeeze(tf.matmul(
+        #    tf.expand_dims(vec_1, [0]), tf.expand_dims(vec_2, [1])))
+        return tf.matmul(tf.reshape(vec_1, [1, -1]), vec_2)
+
 def gaussian_inference_network(x, n_latent_dim, hidden_units):
     with slim.arg_scope([slim.fully_connected], activation_fn=tf.nn.relu):
         hidden_units + [None]
