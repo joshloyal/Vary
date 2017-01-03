@@ -6,15 +6,14 @@ from tensorflow.contrib import layers
 from vary import tensor_utils
 from vary import ops
 from vary import enums
-from vary.flows import IdentityFlow, HouseHolderFlow
-
+from vary import flows
 
 module_rng = np.random.RandomState(123)
 
 
 class TestFlows(tf.test.TestCase):
     def test_identity_flow(self):
-        flow = IdentityFlow(n_iter=1)
+        flow = flows.IdentityFlow(n_iter=1)
 
         z_sample = module_rng.randn(10, 5)
         with self.test_session() as sess:
@@ -23,14 +22,14 @@ class TestFlows(tf.test.TestCase):
             self.assertAllClose(np.zeros(10), jacobian.eval())
 
     def test_householder_no_input(self):
-        flow = HouseHolderFlow(n_iter=1)
+        flow = flows.HouseHolderFlow(n_iter=1)
 
         z_sample = module_rng.randn(10, 5)
         with pytest.raises(Exception):
             trans, jacobian = flow.transform(z_sample)
 
     def test_householder_flow(self):
-        flow = HouseHolderFlow(n_iter=2)
+        flow = flows.HouseHolderFlow(n_iter=2)
 
         features = module_rng.randn(10, 30)
         z_sample = module_rng.randn(10, 5)
@@ -41,3 +40,13 @@ class TestFlows(tf.test.TestCase):
             self.assertAllClose(trans_1.eval(), trans_2.eval())
             self.assertAllClose(np.zeros(10), jac_1.eval())
             self.assertAllClose(jac_1.eval(), jac_2.eval())
+
+    def test_planar_flow(self):
+        flow = flows.PlanarFlow(n_iter=1)
+
+        z_sample = module_rng.randn(10, 5)
+        with self.test_session() as sess:
+            trans, jac = flow.transform(z_sample)
+            sess.run(tf.global_variables_initializer())
+            print(trans.eval())
+            print(jac.eval())

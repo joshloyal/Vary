@@ -9,13 +9,35 @@ from tensorflow.contrib.distributions import distribution_util
 from vary import enums
 
 
+def flatten(tensor, name=None):
+    """Same as tf.squeeze (removes 1d dimensions); however,
+    this seems to keep the shape information."""
+    with tf.variable_scope('flatten', name, [tensor]):
+        return tf.reshape(tensor, [-1])
+
+
+def as_row(vector, name=None):
+    """Makes a row out of a 1d vector (N to 1xN)"""
+    with tf.variable_scope('as_row', name, [vector]):
+        return tf.reshape(vector, [1, -1])
+
+
+def as_column(vector, name=None):
+    """Makes a column out of a 1d vector (N to Nx1)"""
+    with tf.variable_scope('as_column', name, [vector]):
+        return tf.reshape(vector, [-1, 1])
+
+
 def vector_dot(vec_1, vec_2, name=None):
     """Vector dot product. The input vectors are assumed to be one dimensional."""
     with tf.variable_scope('vector_dot', name, [vec_1, vec_2]):
         #return tf.matmul(vec_1, tf.reshape(vec_2, [-1, 1]))
         #return tf.squeeze(tf.matmul(
         #    tf.expand_dims(vec_1, [0]), tf.expand_dims(vec_2, [1])))
-        return tf.matmul(tf.reshape(vec_1, [1, -1]), vec_2)
+        #return tf.matmul(tf.reshape(vec_1, [1, -1]), vec_2)
+        #return tf.squeeze(tf.matmul(as_row(vec_1), as_column(vec_2)))
+        return tf.squeeze(tf.matmul(as_row(vec_1), as_column(vec_2)))
+
 
 def gaussian_inference_network(x, n_latent_dim, hidden_units):
     with slim.arg_scope([slim.fully_connected], activation_fn=tf.nn.relu):

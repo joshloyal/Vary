@@ -3,12 +3,15 @@ import six
 
 import tensorflow as tf
 
-from vary import tensor_utils as tensor_utils
+from vary import ops
+from vary import tensor_utils
+
 
 @six.add_metaclass(abc.ABCMeta)
 class _Flow(object):
     """Single iteration of a normalizing flow"""
-    def __init__(self, n_latent_dim, random_state=123):
+    def __init__(self, name, n_latent_dim, random_state=123):
+        self.name = name
         self.random_state = random_state
         self.n_latent_dim = n_latent_dim
         self.built_ = False
@@ -49,8 +52,10 @@ class NormalizingFlow(object):
 
     def build(self, n_latent_dim):
         if not self._built:
-            self._flows = [self.flow_class(n_latent_dim, random_state=self.random_state)
-                           for _ in range(self.n_iter)]
+            self._flows = [self.flow_class(self.name + '_%i' % i,
+                                           n_latent_dim,
+                                           random_state=self.random_state)
+                           for i in range(self.n_iter)]
         self._built = True
 
     def transform(self, z_sample, features=None):
@@ -61,8 +66,7 @@ class NormalizingFlow(object):
             A sample from the posterior of the distribution obtained
             by applying the householder transformation.
         """
-        with tf.variable_scope('normalizing_flow_transform',
-                               self.name + '_transform',
+        with tf.variable_scope(self.name + '_transform',
                                [z_sample]):
             if features is not None:
                 features = tensor_utils.to_tensor(features, dtype=tf.float32)
@@ -74,4 +78,4 @@ class NormalizingFlow(object):
             for flow in self._flows:
                 z_sample, log_det_jac = flow.transform(z_sample, features=features)
                 log_det_jacobians.append(log_det_jac)
-            return z_sample, tf.add_n(log_det_jacobians)
+            return z_sample, ops.flatten(tf.add_n(log_det_jacobians))

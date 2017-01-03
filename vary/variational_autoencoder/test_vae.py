@@ -33,6 +33,14 @@ class TestGaussianVAE(tf.test.TestCase):
         vae.fit(X)
         print(vae.transform(X))
 
+    def test_planar_flow(self):
+        n_topics, X, _ = build_simple_topics()
+        vae = GaussianVAE(n_latent_dim=3, n_iter=1,
+                          normalizing_flow='planar',
+                          n_jobs=-1)
+        vae.fit(X)
+        print(vae.transform(X))
+
     #def test_mnist(self):
     #    (X_train, y_train), (X_test, y_test) = mnist.load_data()
     #    X_train = X_train.reshape(60000, 784)
